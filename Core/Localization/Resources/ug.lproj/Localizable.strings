@@ -318,3 +318,8 @@
 "new.library_navigation" = "كىتەپخانا ۋە يولباشچىلىق:";
 // Metadata: Translated by ChatGPT; human review required.
 "new.library_navigation.details" = "* باش بەتتە سۈرە ۋە جۇزلارنى تەرتىپلەپ، سۈرە نومۇرلىرىنى كۆرسىتىڭ، شۇنداق قىلىپ لازىملىق بەتكە تېز يېتىڭ - @yismailuofa غا رەھمەت.";
+
+/* Naskh */
+"reading.naskh.title" = "Naskh, King Fahd";
+"reading.naskh.description" = "The Naskh mushaf used in the Quran Android Naskh app.";
+"reading.naskh.issue" = "Naskh script";

@@ -189,7 +189,7 @@ final class ReadingResourcesServiceTests: XCTestCase {
         XCTAssertEqual(fileManager.files, []) // No files since it's bundled
 
         // Given: Switch to remote
-        let secondReading = Reading.hafs_1421
+        let secondReading = Reading.naskh
         ReadingPreferences.shared.reading = secondReading
 
         // Test

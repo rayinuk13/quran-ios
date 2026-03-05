@@ -207,3 +207,8 @@
 // Library & Navigation
 "new.library_navigation" = "Library & Navigation:";
 "new.library_navigation.details" = "* Sort surahs and juz on Home, and display surah numbers so you can jump to what you need faster - thanks to @yismailuofa.";
+
+/* Naskh */
+"reading.naskh.title" = "Naskh, King Fahd";
+"reading.naskh.description" = "The Naskh mushaf used in the Quran Android Naskh app.";
+"reading.naskh.issue" = "Naskh script";

@@ -222,3 +222,8 @@
 "new.library_navigation" = "Thư viện & Điều hướng:";
 // Metadata: Translated by ChatGPT; human review required.
 "new.library_navigation.details" = "* Sắp xếp surah và juz trên Trang chủ và hiển thị số surah để bạn đến nội dung cần nhanh hơn - nhờ @yismailuofa.";
+
+/* Naskh */
+"reading.naskh.title" = "Naskh, King Fahd";
+"reading.naskh.description" = "The Naskh mushaf used in the Quran Android Naskh app.";
+"reading.naskh.issue" = "Naskh script";

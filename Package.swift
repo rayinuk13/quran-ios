@@ -662,6 +662,7 @@ private func featuresTargets() -> [[Target]] {
             "TranslationsFeature",
             "QuranTranslationFeature",
             "QuranTextKit",
+            "ReadingService",
             "Caching",
         ]),
 

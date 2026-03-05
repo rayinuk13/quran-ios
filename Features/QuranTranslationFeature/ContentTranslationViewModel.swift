@@ -9,6 +9,7 @@ import AnnotationsService
 import Combine
 import Crashing
 import Foundation
+import NoorFont
 import QuranKit
 import QuranText
 import QuranTextKit
@@ -24,11 +25,13 @@ public final class ContentTranslationViewModel: ObservableObject {
     public init(
         localTranslationsRetriever: LocalTranslationsRetriever,
         dataService: QuranTextDataService,
-        highlightsService: QuranHighlightsService
+        highlightsService: QuranHighlightsService,
+        reading: Reading
     ) {
         self.dataService = dataService
         self.highlightsService = highlightsService
         self.localTranslationsRetriever = localTranslationsRetriever
+        self.reading = reading
         arabicFontSize = fontSizePreferences.arabicFontSize
         translationFontSize = fontSizePreferences.translationFontSize
         selectedTranslations = selectedTranslationsPreferences.selectedTranslationIds
@@ -95,13 +98,13 @@ public final class ContentTranslationViewModel: ObservableObject {
 
             // Add sura name, if a new sura
             if verse.sura.firstVerse == verse {
-                items.append(.suraName(TranslationSuraName(sura: verse.sura, arabicFontSize: arabicFontSize), color))
+                items.append(.suraName(TranslationSuraName(sura: verse.sura, arabicFontSize: arabicFontSize, arabicFontName: arabicFontName), color))
             }
 
             // Add arabic quran text
             let arabicVerseNumber = NumberFormatter.arabicNumberFormatter.format(verse.ayah)
             let arabicText = verseText.arabicText + " " + arabicVerseNumber
-            items.append(.arabicText(TranslationArabicText(verse: verse, text: arabicText, arabicFontSize: arabicFontSize), color))
+            items.append(.arabicText(TranslationArabicText(verse: verse, text: arabicText, arabicFontSize: arabicFontSize, arabicFontName: arabicFontName), color))
 
             for (index, translation) in translations.enumerated() {
                 let text = verseText.translations[index]
@@ -218,7 +221,17 @@ public final class ContentTranslationViewModel: ObservableObject {
     private let dataService: QuranTextDataService
     private let localTranslationsRetriever: LocalTranslationsRetriever
     private let selectedTranslationsPreferences = SelectedTranslationsPreferences.shared
+    private let reading: Reading
     private let fontSizePreferences = FontSizePreferences.shared
+
+    private var arabicFontName: FontName {
+        switch reading {
+        case .naskh:
+            return .naskh
+        case .hafs_1405, .hafs_1421, .hafs_1440, .tajweed:
+            return .quran
+        }
+    }
 
     private func cutoffChunkIfTruncationNeeded(_ string: String) -> Range<String.Index>? {
         guard let maxUntruncatedIndex = string.index(string.startIndex, offsetBy: Self.maxChunkSize, limitedBy: string.endIndex) else {

@@ -10,6 +10,7 @@ import AppDependencies
 import MoreMenuFeature
 import QuranKit
 import QuranTextKit
+import ReadingService
 import TranslationService
 import TranslationsFeature
 import UIKit
@@ -30,7 +31,14 @@ public struct TranslationVerseBuilder {
             quranFileURL: container.quranUthmaniV2Database
         )
         let localTranslationsRetriever = LocalTranslationsRetriever(databasesURL: container.databasesURL)
-        let viewModel = TranslationVerseViewModel(startingVerse: startingVerse, localTranslationsRetriever: localTranslationsRetriever, dataService: dataService, actions: actions)
+        let reading = ReadingPreferences.shared.reading
+        let viewModel = TranslationVerseViewModel(
+            startingVerse: startingVerse,
+            localTranslationsRetriever: localTranslationsRetriever,
+            dataService: dataService,
+            reading: reading,
+            actions: actions
+        )
         let viewController = TranslationVerseViewController(
             viewModel: viewModel,
             moreMenuBuilder: MoreMenuBuilder(),

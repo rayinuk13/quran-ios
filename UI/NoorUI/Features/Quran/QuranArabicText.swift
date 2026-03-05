@@ -6,6 +6,7 @@
 //
 
 import Localization
+import NoorFont
 import QuranKit
 import QuranText
 import SwiftUI
@@ -18,11 +19,13 @@ public struct QuranArabicText: View {
     let verse: AyahNumber
     let text: String
     let fontSize: FontSize
+    let arabicFontName: FontName
 
-    public init(verse: AyahNumber, text: String, fontSize: FontSize) {
+    public init(verse: AyahNumber, text: String, fontSize: FontSize, arabicFontName: FontName = .quran) {
         self.verse = verse
         self.text = text
         self.fontSize = fontSize
+        self.arabicFontName = arabicFontName
     }
 
     public var body: some View {
@@ -34,7 +37,7 @@ public struct QuranArabicText: View {
                 .cornerRadius(cornerRadius)
 
             Text(text)
-                .font(.quran())
+                .font(.quran(ofSize: fontSize, fontName: arabicFontName))
                 .dynamicTypeSize(fontSize.dynamicTypeSize)
                 .textAlignment(follows: .rightToLeft)
         }

@@ -315,3 +315,8 @@
 "new.library_navigation" = "Библиотека и навигация:";
 // Metadata: Translated by ChatGPT; human review required.
 "new.library_navigation.details" = "* Сортируйте суры и джузы на главном экране и показывайте номера сур, чтобы быстрее перейти к нужному - спасибо @yismailuofa.";
+
+/* Naskh */
+"reading.naskh.title" = "Naskh, King Fahd";
+"reading.naskh.description" = "The Naskh mushaf used in the Quran Android Naskh app.";
+"reading.naskh.issue" = "Naskh script";

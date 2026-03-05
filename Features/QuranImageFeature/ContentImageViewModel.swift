@@ -81,9 +81,14 @@ class ContentImageViewModel: ObservableObject {
         do {
             imagePage = try await imageDataService.imageForPage(page)
 
-            if reading == .hafs_1421 {
-                suraHeaderLocations = try await imageDataService.suraHeaders(page)
-                ayahNumberLocations = try await imageDataService.ayahNumbers(page)
+            if reading.supportsDecorations {
+                do {
+                    suraHeaderLocations = try await imageDataService.suraHeaders(page)
+                    ayahNumberLocations = try await imageDataService.ayahNumbers(page)
+                } catch {
+                    // Decorations should not block image rendering.
+                    logger.error("Quran Image: failed loading decorations for reading=\(reading), page=\(page). Error=\(error)")
+                }
             }
 
             scrollToVerseIfNeeded()
@@ -120,6 +125,17 @@ class ContentImageViewModel: ObservableObject {
         // Execute in the next runloop to allow the highlightsService value to load.
         DispatchQueue.main.async {
             self.scrollToVerseIfNeededSynchronously()
+        }
+    }
+}
+
+private extension Reading {
+    var supportsDecorations: Bool {
+        switch self {
+        case .hafs_1421, .naskh:
+            return true
+        case .hafs_1405, .hafs_1440, .tajweed:
+            return false
         }
     }
 }

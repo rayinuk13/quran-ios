@@ -16,8 +16,12 @@ private let arabicQuranTextFontSize: CGFloat = 21
 private let arabicTafseerTextFontSize: CGFloat = 21
 
 public extension Font {
-    static func quran(ofSize size: FontSize? = nil) -> Font {
-        custom(.quran, size: size?.fontSize(forMediumSize: arabicQuranTextFontSize) ?? arabicQuranTextFontSize)
+    static func quran(ofSize size: FontSize? = nil, fontName: FontName = .quran) -> Font {
+        custom(fontName, size: size?.fontSize(forMediumSize: arabicQuranTextFontSize) ?? arabicQuranTextFontSize)
+    }
+
+    static func quranNaskh(ofSize size: FontSize? = nil) -> Font {
+        quran(ofSize: size, fontName: .naskh)
     }
 
     static func arabicTafseer() -> Font {

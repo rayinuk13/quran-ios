@@ -315,3 +315,8 @@
 "new.library_navigation" = "Bibliothek & Navigation:";
 // Metadata: Translated by ChatGPT; human review required.
 "new.library_navigation.details" = "* Sortieren Sie Suren und Juz auf der Startseite und zeigen Sie Surennummern an, damit Sie schneller zu dem gelangen, was Sie brauchen - danke an @yismailuofa.";
+
+/* Naskh */
+"reading.naskh.title" = "Naskh, King Fahd";
+"reading.naskh.description" = "The Naskh mushaf used in the Quran Android Naskh app.";
+"reading.naskh.issue" = "Naskh script";

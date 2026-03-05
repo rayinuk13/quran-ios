@@ -317,3 +317,8 @@
 "new.library_navigation" = "Kutubxona va navigatsiya:";
 // Metadata: Translated by ChatGPT; human review required.
 "new.library_navigation.details" = "* Bosh sahifada suralar va juzlarni tartiblang hamda sura raqamlarini ko'rsating, shunda kerakli joyga tezroq o'tasiz - @yismailuofa ga rahmat.";
+
+/* Naskh */
+"reading.naskh.title" = "Naskh, King Fahd";
+"reading.naskh.description" = "The Naskh mushaf used in the Quran Android Naskh app.";
+"reading.naskh.issue" = "Naskh script";
