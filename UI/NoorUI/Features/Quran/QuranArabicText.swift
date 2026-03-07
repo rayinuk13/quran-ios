@@ -36,13 +36,47 @@ public struct QuranArabicText: View {
                 .themedSecondaryBackground()
                 .cornerRadius(cornerRadius)
 
-            Text(text)
-                .font(.quran(ofSize: fontSize, fontName: arabicFontName))
-                .dynamicTypeSize(fontSize.dynamicTypeSize)
-                .textAlignment(follows: .rightToLeft)
+            HStack(alignment: .center, spacing: 8) {
+                AyahEndMark(number: arabicVerseNumber, fontSize: fontSize, arabicFontName: arabicFontName)
+
+                Text(text)
+                    .font(.quran(ofSize: fontSize, fontName: arabicFontName))
+                    .dynamicTypeSize(fontSize.dynamicTypeSize)
+            }
+            .textAlignment(follows: .rightToLeft)
         }
         .padding(.bottom, bottomPadding)
         .padding(.top, topPadding)
         .readableInsetsPadding(.horizontal)
+    }
+
+    private var arabicVerseNumber: String {
+        NumberFormatter.arabicNumberFormatter.format(verse.ayah)
+    }
+}
+
+private struct AyahEndMark: View {
+    let number: String
+    let fontSize: FontSize
+    let arabicFontName: FontName
+
+    var body: some View {
+        ZStack {
+            Text("۝")
+                .font(.custom(arabicFontName, size: markerFontSize))
+            Text(number)
+                .font(.custom(arabicFontName, size: numberFontSize))
+                .offset(y: markerFontSize * 0.02)
+        }
+        .frame(minWidth: markerFontSize * 0.95)
+        .fixedSize()
+    }
+
+    private var markerFontSize: CGFloat {
+        fontSize.fontSize(forMediumSize: 32)
+    }
+
+    private var numberFontSize: CGFloat {
+        fontSize.fontSize(forMediumSize: 17)
     }
 }
