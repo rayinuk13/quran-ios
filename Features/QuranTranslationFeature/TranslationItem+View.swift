@@ -5,6 +5,7 @@
 //  Created by Mohamed Afifi on 2023-12-28.
 //
 
+import NoorFont
 import NoorUI
 import QuranKit
 import QuranText
@@ -115,8 +116,6 @@ extension TranslationItem: View {
         .trackingTarget(item: id)
     }
 }
-
-import NoorFont
 
 #Preview {
     ContentTranslationPreview()
