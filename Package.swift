@@ -716,6 +716,12 @@ private func featuresTargets() -> [[Target]] {
             "WhatsNewFeature",
             "AudioUpdater",
             "AppMigrationFeature",
+            "AudioBannerFeature",
+            "QuranAudio",
+            "QuranAudioKit",
+            "ReciterService",
+            "ReadingService",
+            "QuranTextKit",
         ]),
     ]
 }

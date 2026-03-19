@@ -20,6 +20,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         FontName.registerFonts()
         LoggingSystem.bootstrap(StreamLogHandler.standardError)
+        CarPlayRuntimeDependencies.appDependencies = container
 
         Task {
             // Eagerly load download manager to handle any background downloads.
@@ -35,7 +36,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     // MARK: UISceneSession Lifecycle
 
     func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
-        UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
+        let configurationName = switch connectingSceneSession.role {
+        case .carTemplateApplication: "CarPlay Configuration"
+        default: "Default Configuration"
+        }
+        return UISceneConfiguration(name: configurationName, sessionRole: connectingSceneSession.role)
     }
 
     func application(_ application: UIApplication, didDiscardSceneSessions sceneSessions: Set<UISceneSession>) {
