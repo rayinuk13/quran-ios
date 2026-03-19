@@ -138,7 +138,7 @@ private final class CarPlayPlaybackController {
                     baseURL: container.filesAppHost,
                     downloader: container.downloadManager
                 )
-                if !await downloader.downloaded(reciter: reciter, from: sura.firstVerse, to: sura.lastVerse) {
+                if ! await downloader.downloaded(reciter: reciter, from: sura.firstVerse, to: sura.lastVerse) {
                     let download = try await downloader.download(from: sura.firstVerse, to: sura.lastVerse, reciter: reciter)
                     for try await _ in download.progress {}
                 }
