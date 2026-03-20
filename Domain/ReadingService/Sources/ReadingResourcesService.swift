@@ -110,6 +110,15 @@ public actor ReadingResourcesService {
 
         logger.info("Resources: Start loading reading resources of: \(reading)")
         guard let remoteResource = remoteResources?.resource(for: reading) else {
+            if reading == .naskh {
+                let error = NSError(
+                    domain: "ReadingResourcesService",
+                    code: 1,
+                    userInfo: [NSLocalizedDescriptionKey: "Naskh reading requires remote resources but none are configured."]
+                )
+                logger.error("Resources: Reading \(reading) requires remote resources, but none are configured.")
+                return .error(error)
+            }
             logger.info("Resources: Reading \(reading) is bundled with the app.")
             return .ready
         }
