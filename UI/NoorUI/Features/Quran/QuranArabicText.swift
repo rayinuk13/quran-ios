@@ -36,7 +36,7 @@ public struct QuranArabicText: View {
                 .themedSecondaryBackground()
                 .cornerRadius(cornerRadius)
 
-            HStack(alignment: .center, spacing: 8) {
+            HStack(alignment: .center, spacing: 4) {
                 AyahEndMark(number: arabicVerseNumber, fontSize: fontSize, arabicFontName: arabicFontName)
 
                 Text(text)
@@ -68,15 +68,15 @@ private struct AyahEndMark: View {
                 .font(.custom(arabicFontName, size: numberFontSize))
                 .offset(y: markerFontSize * 0.02)
         }
-        .frame(minWidth: markerFontSize * 0.95)
+        .frame(minWidth: markerFontSize * 0.82)
         .fixedSize()
     }
 
     private var markerFontSize: CGFloat {
-        fontSize.fontSize(forMediumSize: 32)
+        fontSize.fontSize(forMediumSize: 22)
     }
 
     private var numberFontSize: CGFloat {
-        fontSize.fontSize(forMediumSize: 17)
+        fontSize.fontSize(forMediumSize: 11)
     }
 }
