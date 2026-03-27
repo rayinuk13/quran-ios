@@ -10,11 +10,12 @@ public enum Reading: Int {
     case hafs_1440 = 1
     case tajweed = 2
     case hafs_1421 = 3
+    case naskh = 4
 
     // MARK: Public
 
     public static let sortedReadings: [Reading] = [
-        .hafs_1405, .tajweed, .hafs_1421, .hafs_1440,
+        .hafs_1405, .tajweed, .naskh, .hafs_1421, .hafs_1440,
     ]
 
     public var quran: Quran {
@@ -24,6 +25,8 @@ public enum Reading: Int {
         case .hafs_1440:
             return .hafsMadani1440
         case .hafs_1421:
+            return .hafsMadani1440
+        case .naskh:
             return .hafsMadani1440
         case .tajweed:
             return .hafsMadani1405

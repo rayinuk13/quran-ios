@@ -45,10 +45,11 @@ public struct ContentImageBuilder {
     // MARK: Internal
 
     static func buildImageDataService(reading: Reading, container: AppDependencies) -> ImageDataService {
-        let readingDirectory = Self.readingDirectory(reading, container: container)
+        let readingForImageData = Self.readingForImageData(reading, container: container)
+        let readingDirectory = Self.readingDirectory(readingForImageData, container: container)
         return ImageDataService(
-            ayahInfoDatabase: reading.ayahInfoDatabase(in: readingDirectory),
-            imagesURL: reading.images(in: readingDirectory)
+            ayahInfoDatabase: readingForImageData.ayahInfoDatabase(in: readingDirectory),
+            imagesURL: readingForImageData.images(in: readingDirectory)
         )
     }
 
@@ -60,9 +61,42 @@ public struct ContentImageBuilder {
     private static func readingDirectory(_ reading: Reading, container: AppDependencies) -> URL {
         let remoteResource = container.remoteResources?.resource(for: reading)
         let remotePath = remoteResource?.downloadDestination.url
-        let bundlePath = { Bundle.main.url(forResource: reading.localPath, withExtension: nil) }
-        logger.info("Images: Use \(remoteResource != nil ? "remote" : "bundle") For reading \(reading)")
-        return remotePath ?? bundlePath()!
+        if let remotePath, FileManager.default.fileExists(atPath: remotePath.path) {
+            logger.info("Images: Use remote resources for reading \(reading)")
+            return remotePath
+        }
+
+        if let bundlePath = Bundle.main.url(forResource: reading.localPath, withExtension: nil) {
+            logger.info("Images: Use bundled resources for reading \(reading)")
+            return bundlePath
+        }
+
+        // Avoid crashing if neither bundled nor remote resources are available.
+        logger.error("Images: Missing resources for reading \(reading). Falling back to app bundle root.")
+        return Bundle.main.bundleURL
+    }
+
+    private static func readingForImageData(_ reading: Reading, container: AppDependencies) -> Reading {
+        if hasImageData(for: reading, container: container) {
+            return reading
+        }
+
+        let fallback: Reading = .hafs_1405
+        if reading != fallback, hasImageData(for: fallback, container: container) {
+            logger.error("Images: Missing image data for reading \(reading). Falling back to \(fallback).")
+            return fallback
+        }
+
+        logger.error("Images: Missing image data for reading \(reading) and no fallback was found.")
+        return reading
+    }
+
+    private static func hasImageData(for reading: Reading, container: AppDependencies) -> Bool {
+        let directory = readingDirectory(reading, container: container)
+        let ayahInfoDatabase = reading.ayahInfoDatabase(in: directory)
+        let images = reading.images(in: directory)
+        return FileManager.default.fileExists(atPath: ayahInfoDatabase.path)
+            && FileManager.default.fileExists(atPath: images.path)
     }
 }
 
@@ -75,6 +109,8 @@ private extension Reading {
             return directory.appendingPathComponent("images_1120/databases/ayahinfo_1120.db")
         case .hafs_1440:
             return directory.appendingPathComponent("images_1352/databases/ayahinfo_1352.db")
+        case .naskh:
+            return directory.appendingPathComponent("images_1342/databases/ayahinfo_1342.db")
         case .tajweed:
             return directory.appendingPathComponent("images_1280/databases/ayahinfo_1280.db")
         }
@@ -88,6 +124,8 @@ private extension Reading {
             return directory.appendingPathComponent("images_1120/width_1120")
         case .hafs_1440:
             return directory.appendingPathComponent("images_1352/width_1352")
+        case .naskh:
+            return directory.appendingPathComponent("images_1342/width_1342")
         case .tajweed:
             return directory.appendingPathComponent("images_1280/width_1280")
         }
@@ -101,6 +139,8 @@ private extension Reading {
         case .hafs_1421:
             return .zero
         case .hafs_1440:
+            return .zero
+        case .naskh:
             return .zero
         case .tajweed:
             return .zero

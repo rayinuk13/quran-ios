@@ -317,3 +317,8 @@
 "new.library_navigation" = "Biblioteca y navegación:";
 // Metadata: Translated by ChatGPT; human review required.
 "new.library_navigation.details" = "* Ordena suras y juz en Inicio y muestra los números de sura para que puedas acceder a lo que necesitas más rápido - gracias a @yismailuofa.";
+
+/* Naskh */
+"reading.naskh.title" = "Naskh (Indopak)";
+"reading.naskh.description" = "The Naskh calligraphy mushaf originating from the 10th century.";
+"reading.naskh.issue" = "Naskh script";

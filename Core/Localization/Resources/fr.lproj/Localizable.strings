@@ -317,3 +317,8 @@
 "new.library_navigation" = "Bibliothèque et navigation:";
 // Metadata: Translated by ChatGPT; human review required.
 "new.library_navigation.details" = "* Triez les sourates et les juz sur Accueil et affichez les numéros de sourate pour accéder plus rapidement à ce dont vous avez besoin - merci à @yismailuofa.";
+
+/* Naskh */
+"reading.naskh.title" = "Naskh (Indopak)";
+"reading.naskh.description" = "The Naskh calligraphy mushaf originating from the 10th century.";
+"reading.naskh.issue" = "Naskh script";

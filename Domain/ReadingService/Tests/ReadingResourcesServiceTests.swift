@@ -189,7 +189,7 @@ final class ReadingResourcesServiceTests: XCTestCase {
         XCTAssertEqual(fileManager.files, []) // No files since it's bundled
 
         // Given: Switch to remote
-        let secondReading = Reading.hafs_1421
+        let secondReading = Reading.naskh
         ReadingPreferences.shared.reading = secondReading
 
         // Test
@@ -244,6 +244,34 @@ final class ReadingResourcesServiceTests: XCTestCase {
         XCTAssertTrue(firstDownload.isCancelled)
         await waitForReady()
         try assertDownloadedFiles(secondReading)
+    }
+
+    func test_naskhWithoutRemoteResource_returnsError() async throws {
+        // Given
+        ReadingPreferences.shared.reading = .naskh
+        service = ReadingResourcesService(
+            fileManager: fileManager,
+            zipper: zipper,
+            scheduler: testScheduler,
+            throttleInterval: .zero,
+            preferencesObservingStarted: preferencesObservingStarted,
+            preferenceLoadingCompleted: preferenceLoadingCompleted,
+            downloader: downloader,
+            remoteResources: nil
+        )
+        collector = PublisherCollector(service.publisher)
+
+        // Test
+        await service.startLoadingResources()
+        await finishLoadingNoDownload()
+
+        // Then
+        guard case .error(let error) = collector.items.last else {
+            XCTFail("Expected .error when naskh has no remote resources configured")
+            return
+        }
+        XCTAssertEqual(error.domain, "ReadingResourcesService")
+        XCTAssertEqual(error.code, 1)
     }
 
     // MARK: Private

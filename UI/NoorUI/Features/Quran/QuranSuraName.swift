@@ -5,6 +5,7 @@
 //  Created by Mohamed Afifi on 2024-02-10.
 //
 
+import NoorFont
 import QuranText
 import SwiftUI
 
@@ -15,11 +16,13 @@ public struct QuranSuraName: View {
     let suraName: String
     let besmAllah: String
     let besmAllahFontSize: FontSize
+    let arabicFontName: FontName
 
-    public init(suraName: String, besmAllah: String, besmAllahFontSize: FontSize) {
+    public init(suraName: String, besmAllah: String, besmAllahFontSize: FontSize, arabicFontName: FontName = .quran) {
         self.suraName = suraName
         self.besmAllah = besmAllah
         self.besmAllahFontSize = besmAllahFontSize
+        self.arabicFontName = arabicFontName
     }
 
     public var body: some View {
@@ -33,7 +36,7 @@ public struct QuranSuraName: View {
                         .minimumScaleFactor(0.3)
                 }
             Text(besmAllah)
-                .font(.quran())
+                .font(.quran(ofSize: besmAllahFontSize, fontName: arabicFontName))
                 .dynamicTypeSize(besmAllahFontSize.dynamicTypeSize)
         }
         .padding(.bottom, bottomPadding)

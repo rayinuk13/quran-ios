@@ -30,13 +30,24 @@ public struct TranslationVerseActions {
 class TranslationVerseViewModel: ObservableObject {
     // MARK: Lifecycle
 
-    init(startingVerse: AyahNumber, localTranslationsRetriever: LocalTranslationsRetriever, dataService: QuranTextDataService, actions: TranslationVerseActions) {
+    init(
+        startingVerse: AyahNumber,
+        localTranslationsRetriever: LocalTranslationsRetriever,
+        dataService: QuranTextDataService,
+        reading: Reading,
+        actions: TranslationVerseActions
+    ) {
         currentVerse = startingVerse
         self.dataService = dataService
         self.actions = actions
 
         let noOpHighlightingService = QuranHighlightsService()
-        translationViewModel = ContentTranslationViewModel(localTranslationsRetriever: localTranslationsRetriever, dataService: dataService, highlightsService: noOpHighlightingService)
+        translationViewModel = ContentTranslationViewModel(
+            localTranslationsRetriever: localTranslationsRetriever,
+            dataService: dataService,
+            highlightsService: noOpHighlightingService,
+            reading: reading
+        )
         translationViewModel.showHeaderAndFooter = false
         translationViewModel.verses = [startingVerse]
     }

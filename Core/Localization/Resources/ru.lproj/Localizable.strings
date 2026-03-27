@@ -317,3 +317,8 @@
 "new.library_navigation" = "Библиотека и навигация:";
 // Metadata: Translated by ChatGPT; human review required.
 "new.library_navigation.details" = "* Сортируйте суры и джузы на главном экране и показывайте номера сур, чтобы быстрее перейти к нужному - спасибо @yismailuofa.";
+
+/* Naskh */
+"reading.naskh.title" = "Naskh (Indopak)";
+"reading.naskh.description" = "The Naskh calligraphy mushaf originating from the 10th century.";
+"reading.naskh.issue" = "Naskh script";
