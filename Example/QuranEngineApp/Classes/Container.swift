@@ -15,6 +15,7 @@ import Foundation
 import LastPagePersistence
 import NotePersistence
 import PageBookmarkPersistence
+import QuranKit
 import ReadingService
 import UIKit
 
@@ -28,7 +29,7 @@ class Container: AppDependencies {
 
     static let shared = Container()
 
-    let remoteResources: ReadingRemoteResources? = nil
+    let remoteResources: ReadingRemoteResources? = ExampleReadingRemoteResources()
     private(set) lazy var readingResources = ReadingResourcesService(downloader: downloadManager, remoteResources: remoteResources)
 
     let analytics: AnalyticsLibrary = LoggingAnalyticsLibrary()
@@ -45,7 +46,7 @@ class Container: AppDependencies {
     }()
 
     private(set) lazy var downloadManager: DownloadManager = {
-        let configuration = URLSessionConfiguration.background(withIdentifier: "DownloadsBackgroundIdentifier")
+        let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 60 * 5 // 5 minutes
         return DownloadManager(
             maxSimultaneousDownloads: 600,
@@ -89,4 +90,16 @@ private enum Constant {
 
     /// If set, the Quran.com login will be enabled.
     static let QuranOAuthAppConfigurations: AuthenticationClientConfiguration? = nil
+}
+
+private struct ExampleReadingRemoteResources: ReadingRemoteResources {
+    func resource(for reading: Reading) -> RemoteResource? {
+        guard reading == .naskh else {
+            return nil
+        }
+
+        // Android app package path for Naskh Mushaf resources.
+        let url = URL(validURL: "https://files.quran.app/hafs/naskh_kingfahd/zips/images_1342.zip")
+        return RemoteResource(url: url, reading: .naskh, version: 1)
+    }
 }

@@ -258,6 +258,6 @@
 "new.library_navigation.details" = "* Ana Sayfa'da sureleri ve cüzleri sıralayın ve sure numaralarını gösterin, böylece ihtiyacınız olana daha hızlı ulaşabilirsiniz - @yismailuofa sayesinde.";
 
 /* Naskh */
-"reading.naskh.title" = "Naskh, King Fahd";
-"reading.naskh.description" = "The Naskh mushaf used in the Quran Android Naskh app.";
+"reading.naskh.title" = "Naskh (Indopak)";
+"reading.naskh.description" = "The Naskh calligraphy mushaf originating from the 10th century.";
 "reading.naskh.issue" = "Naskh script";

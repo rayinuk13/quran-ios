@@ -318,6 +318,6 @@
 "new.library_navigation.details" = "* 在主页排序苏拉和朱兹并显示苏拉编号，帮助你更快跳转到所需内容 - 感谢 @yismailuofa。";
 
 /* Naskh */
-"reading.naskh.title" = "Naskh, King Fahd";
-"reading.naskh.description" = "The Naskh mushaf used in the Quran Android Naskh app.";
+"reading.naskh.title" = "Naskh (Indopak)";
+"reading.naskh.description" = "The Naskh calligraphy mushaf originating from the 10th century.";
 "reading.naskh.issue" = "Naskh script";

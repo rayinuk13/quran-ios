@@ -299,6 +299,6 @@
 "new.library_navigation.details" = "* Үй бетінде сүрелер мен жүздерді сұрыптап, сүре нөмірлерін көрсетіңіз, сонда қажет нәрсеге тезірек жете аласыз - @yismailuofa-ға рахмет.";
 
 /* Naskh */
-"reading.naskh.title" = "Naskh, King Fahd";
-"reading.naskh.description" = "The Naskh mushaf used in the Quran Android Naskh app.";
+"reading.naskh.title" = "Naskh (Indopak)";
+"reading.naskh.description" = "The Naskh calligraphy mushaf originating from the 10th century.";
 "reading.naskh.issue" = "Naskh script";
