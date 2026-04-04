@@ -17,14 +17,14 @@ public struct AdaptiveImageScrollView<Header: View, Footer: View>: View {
     public init(
         decorations: ImageDecorations,
         renderingMode: QuranThemedImage.RenderingMode = .tinted,
-        image: () -> UIImage?,
+        content: () -> ImagePage.Content?,
         onScaleChange: @escaping (WordFrameScale) -> Void,
         onGlobalFrameChange: @escaping (CGRect) -> Void,
         @ViewBuilder header: () -> Header,
         @ViewBuilder footer: () -> Footer
     ) {
         self.decorations = decorations
-        self.image = image()
+        self.content = content()
         self.renderingMode = renderingMode
         self.header = header()
         self.footer = footer()
@@ -42,11 +42,11 @@ public struct AdaptiveImageScrollView<Header: View, Footer: View>: View {
                         .onSizeChange { headerSize = $0 }
 
                     Group {
-                        if let image {
-                            QuranThemedImage(image: image, renderingMode: renderingMode)
+                        if let content {
+                            pageContentView(content)
                                 .background(
                                     ImageDecorationsView(
-                                        imageSize: image.size,
+                                        imageSize: content.pageSize,
                                         decorations: decorations,
                                         onScaleChange: onScaleChange,
                                         onGlobalFrameChange: onGlobalFrameChange
@@ -75,11 +75,31 @@ public struct AdaptiveImageScrollView<Header: View, Footer: View>: View {
 
     private let header: Header
     private let footer: Footer
-    private let image: UIImage?
+    private let content: ImagePage.Content?
     private let renderingMode: QuranThemedImage.RenderingMode
     private let decorations: ImageDecorations
     private let onScaleChange: (WordFrameScale) -> Void
     private let onGlobalFrameChange: (CGRect) -> Void
+
+    @ViewBuilder
+    private func pageContentView(_ content: ImagePage.Content) -> some View {
+        switch content {
+        case .fullPage(let image):
+            QuranThemedImage(image: image, renderingMode: renderingMode)
+        case .lineBased(let lines):
+            VStack(spacing: 0) {
+                ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
+                    ZStack(alignment: .leading) {
+                        QuranThemedImage(image: line.image, renderingMode: renderingMode)
+                        if let sideline = line.sidelineImage {
+                            QuranThemedImage(image: sideline, renderingMode: renderingMode)
+                                .aspectRatio(contentMode: .fit)
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     @ViewBuilder
     private func scrollView(@ViewBuilder content: () -> some View) -> some View {
@@ -100,7 +120,7 @@ public struct AdaptiveImageScrollView<Header: View, Footer: View>: View {
 
     private func imageHeight(geometry: GeometryProxy) -> CGFloat {
         let imageGeometry = imageGeometrySize(from: geometry)
-        if let imageSize = image?.size, imageGeometry.width > imageGeometry.height {
+        if let imageSize = content?.pageSize, imageGeometry.width > imageGeometry.height {
             return imageGeometry.width * (imageSize.height / imageSize.width)
         } else {
             return imageGeometry.height

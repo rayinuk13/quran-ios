@@ -18,7 +18,7 @@ struct ContentImageView: View {
         VStack {
             ContentImageViewBody(
                 decorations: viewModel.decorations,
-                image: viewModel.imagePage?.image,
+                content: viewModel.imagePage?.content,
                 renderingMode: viewModel.imageRenderingMode,
                 quarterName: viewModel.page.localizedQuarterName,
                 suraNames: viewModel.page.suraNames(),
@@ -44,7 +44,7 @@ struct ContentImageView: View {
 
 private struct ContentImageViewBody: View {
     let decorations: ImageDecorations
-    let image: UIImage?
+    let content: ImagePage.Content?
     let renderingMode: QuranThemedImage.RenderingMode
     let quarterName: String
     let suraNames: MultipartText
@@ -56,7 +56,7 @@ private struct ContentImageViewBody: View {
 
     var body: some View {
         AdaptiveImageScrollView(decorations: decorations, renderingMode: renderingMode) {
-            image
+            content
         } onScaleChange: {
             onScaleChange($0)
         } onGlobalFrameChange: {
@@ -82,7 +82,7 @@ private struct ContentImageViewBody: View {
             wordFrames: WordFrameCollection(lines: []),
             highlights: [:]
         ),
-        image: UIImage(contentsOfFile: testResourceURL("images/page604.png").absoluteString)!,
+        content: .fullPage(UIImage(contentsOfFile: testResourceURL("images/page604.png").absoluteString)!),
         renderingMode: .tinted,
         quarterName: "ABC",
         suraNames: "ABC",

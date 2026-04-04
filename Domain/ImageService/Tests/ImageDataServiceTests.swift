@@ -45,8 +45,8 @@ class ImageDataServiceTests: XCTestCase {
 
     func testWordFrameCollection() async throws {
         let page = quran.pages[0]
-        let image = try await service.imageForPage(page)
-        let wordFrames = image.wordFrames
+        let imagePage = try await service.imageForPage(page)
+        let wordFrames = imagePage.wordFrames
 
         XCTAssertEqual(wordFrames.lines[0].frames, wordFrames.wordFramesForVerse(page.firstVerse))
         XCTAssertEqual(
@@ -55,8 +55,8 @@ class ImageDataServiceTests: XCTestCase {
         )
         XCTAssertEqual([], wordFrames.wordFramesForVerse(quran.lastVerse))
 
-        let verticalScaling = WordFrameScale.scaling(imageSize: image.image.size, into: CGSize(width: 359, height: 668))
-        let horizontalScaling = WordFrameScale.scaling(imageSize: image.image.size, into: CGSize(width: 708, height: 1170.923076923077))
+        let verticalScaling = WordFrameScale.scaling(imageSize: imagePage.pageSize, into: CGSize(width: 359, height: 668))
+        let horizontalScaling = WordFrameScale.scaling(imageSize: imagePage.pageSize, into: CGSize(width: 708, height: 1170.923076923077))
 
         XCTAssertEqual(
             Word(verse: AyahNumber(quran: quran, sura: 1, ayah: 7)!, wordNumber: 3),
@@ -95,12 +95,160 @@ class ImageDataServiceTests: XCTestCase {
         try verifyImagePage(image)
     }
 
+    // MARK: - Line-based page tests
+
+    func testLineBasedPage() async throws {
+        let (tempImagesURL, tempDir) = try makeLineBasedImagesDir(pageNumber: 2, lineCount: 3, includeSideline: false)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let lineService = ImageDataService(
+            ayahInfoDatabase: TestResources.resourceURL("hafs_1405_ayahinfo.db"),
+            imagesURL: tempImagesURL
+        )
+        let page = quran.pages[1] // page 2
+        let imagePage = try await lineService.imageForPage(page)
+
+        // Should return line-based content, not a full-page image.
+        guard case .lineBased(let lines) = imagePage.content else {
+            return XCTFail("Expected lineBased content, got \(imagePage.content)")
+        }
+        XCTAssertEqual(lines.count, 3)
+        XCTAssertEqual(lines.map(\.number), [1, 2, 3], "Lines must be in ascending order")
+        XCTAssertTrue(lines.allSatisfy { $0.sidelineImage == nil })
+        XCTAssertEqual(imagePage.startAyah, page.firstVerse)
+
+        // No stitched file must be written to disk.
+        let generatedDir = tempImagesURL.appendingPathComponent("generated")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: generatedDir.path), "No generated directory should be created")
+    }
+
+    func testLineBasedPageWithSideline() async throws {
+        let (tempImagesURL, tempDir) = try makeLineBasedImagesDir(pageNumber: 2, lineCount: 2, includeSideline: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let lineService = ImageDataService(
+            ayahInfoDatabase: TestResources.resourceURL("hafs_1405_ayahinfo.db"),
+            imagesURL: tempImagesURL
+        )
+        let page = quran.pages[1] // page 2
+        let imagePage = try await lineService.imageForPage(page)
+
+        guard case .lineBased(let lines) = imagePage.content else {
+            return XCTFail("Expected lineBased content, got \(imagePage.content)")
+        }
+        XCTAssertEqual(lines.count, 2)
+
+        let sidelineImage = try XCTUnwrap(lines[0].sidelineImage, "Line 1 should have a sideline image")
+        // The test sideline image is created as 20×10 (width × height).
+        XCTAssertEqual(sidelineImage.size, CGSize(width: 20, height: 10))
+        XCTAssertNil(lines[1].sidelineImage, "Line 2 should not have a sideline image")
+    }
+
+    func testNonSequentialLineNumbers() async throws {
+        // Write line files with gaps: 1.png, 3.png, 5.png — order must still be ascending.
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let pageNumber = 2
+        let pageDir = tempDir.appendingPathComponent("\(pageNumber)", isDirectory: true)
+        try FileManager.default.createDirectory(at: pageDir, withIntermediateDirectories: true)
+
+        for lineNumber in [3, 1, 5] { // write in reverse/random order on purpose
+            let img = makeSolidColorImage(size: CGSize(width: 100, height: 20), color: .gray)
+            let data = try XCTUnwrap(img.pngData())
+            try data.write(to: pageDir.appendingPathComponent("\(lineNumber).png"))
+        }
+
+        let lineService = ImageDataService(
+            ayahInfoDatabase: TestResources.resourceURL("hafs_1405_ayahinfo.db"),
+            imagesURL: tempDir
+        )
+        let page = quran.pages[1]
+        let imagePage = try await lineService.imageForPage(page)
+
+        guard case .lineBased(let lines) = imagePage.content else {
+            return XCTFail("Expected lineBased content, got \(imagePage.content)")
+        }
+        XCTAssertEqual(lines.map(\.number), [1, 3, 5], "Lines must be sorted in ascending order regardless of filesystem order")
+    }
+
+    func testLineBasedPageSizeComputedFromLines() async throws {
+        let (tempImagesURL, tempDir) = try makeLineBasedImagesDir(pageNumber: 2, lineCount: 3, includeSideline: false)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let lineService = ImageDataService(
+            ayahInfoDatabase: TestResources.resourceURL("hafs_1405_ayahinfo.db"),
+            imagesURL: tempImagesURL
+        )
+        let page = quran.pages[1]
+        let imagePage = try await lineService.imageForPage(page)
+
+        // Each test line image is 100×20; total virtual page = 100×60.
+        XCTAssertEqual(imagePage.pageSize, CGSize(width: 100, height: 60))
+        XCTAssertNil(imagePage.image)
+        XCTAssertEqual(imagePage.lines.count, 3)
+    }
+
+    func testMissingAssets() async throws {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let emptyService = ImageDataService(
+            ayahInfoDatabase: TestResources.resourceURL("hafs_1405_ayahinfo.db"),
+            imagesURL: tempDir
+        )
+        let page = quran.pages[0]
+        do {
+            _ = try await emptyService.imageForPage(page)
+            XCTFail("Expected an error for missing image assets")
+        } catch {
+            // Expected
+            XCTAssertTrue(error.localizedDescription.contains("No image found"), "Error: \(error)")
+        }
+    }
+
+    func testFullPageImageTakesPrecedenceOverLineDirectory() async throws {
+        // Create a temp dir that has BOTH a full-page PNG and a line directory for the same page.
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let pageNumber = 2
+        // Write the full-page PNG.
+        let pageImage = makeSolidColorImage(size: CGSize(width: 100, height: 200), color: .blue)
+        let pageImageData = try XCTUnwrap(pageImage.pngData())
+        let pageImageURL = tempDir.appendingPathComponent("page002.png")
+        try pageImageData.write(to: pageImageURL)
+
+        // Also write a line directory.
+        let lineDir = tempDir.appendingPathComponent("\(pageNumber)", isDirectory: true)
+        try FileManager.default.createDirectory(at: lineDir, withIntermediateDirectories: true)
+        let lineImage = makeSolidColorImage(size: CGSize(width: 100, height: 20), color: .red)
+        let lineData = try XCTUnwrap(lineImage.pngData())
+        try lineData.write(to: lineDir.appendingPathComponent("1.png"))
+
+        let lineService = ImageDataService(
+            ayahInfoDatabase: TestResources.resourceURL("hafs_1405_ayahinfo.db"),
+            imagesURL: tempDir
+        )
+        let page = quran.pages[1]
+        let imagePage = try await lineService.imageForPage(page)
+
+        // Full-page PNG must win.
+        guard case .fullPage = imagePage.content else {
+            return XCTFail("Expected fullPage content, got \(imagePage.content)")
+        }
+    }
+
     // MARK: Private
 
     @MainActor
     private func verifyImagePage(_ imagePage: ImagePage, testName: String = #function) throws {
-        // assert the image
-        assertSnapshot(matching: imagePage.image, as: .image, testName: testName)
+        // assert the image (only valid for full-page assets used in the default test setup)
+        let image = try XCTUnwrap(imagePage.image)
+        assertSnapshot(matching: image, as: .image, testName: testName)
 
         // assert the word frames values
         let frames = imagePage.wordFrames.lines.flatMap(\.frames).sorted { $0.word < $1.word }
@@ -109,7 +257,7 @@ class ImageDataServiceTests: XCTestCase {
         if ProcessInfo.processInfo.environment["LocalSnapshots"] != nil {
             print("[Test] Asserting LocalSnapshots")
             // assert the drawn word frames
-            let highlightedImage = try drawFrames(imagePage.image, frames: imagePage.wordFrames, strokeWords: false)
+            let highlightedImage = try drawFrames(image, frames: imagePage.wordFrames, strokeWords: false)
             assertSnapshot(matching: highlightedImage, as: .image, testName: testName)
         }
     }
@@ -143,5 +291,45 @@ class ImageDataServiceTests: XCTestCase {
         let newImage = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
         return try XCTUnwrap(newImage)
+    }
+
+    /// Creates a temporary images directory containing a line-based page directory.
+    /// Returns (imagesURL, rootTempDir) so callers can clean up.
+    private func makeLineBasedImagesDir(
+        pageNumber: Int,
+        lineCount: Int,
+        includeSideline: Bool
+    ) throws -> (imagesURL: URL, rootTempDir: URL) {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+
+        let pageDir = tempDir.appendingPathComponent("\(pageNumber)", isDirectory: true)
+        try FileManager.default.createDirectory(at: pageDir, withIntermediateDirectories: true)
+
+        for i in 1 ... lineCount {
+            let lineImage = makeSolidColorImage(size: CGSize(width: 100, height: 20), color: .gray)
+            let data = try XCTUnwrap(lineImage.pngData())
+            try data.write(to: pageDir.appendingPathComponent("\(i).png"))
+        }
+
+        if includeSideline {
+            let sidelineDir = pageDir.appendingPathComponent("sidelines", isDirectory: true)
+            try FileManager.default.createDirectory(at: sidelineDir, withIntermediateDirectories: true)
+            let sidelineImage = makeSolidColorImage(size: CGSize(width: 20, height: 10), color: .darkGray)
+            let data = try XCTUnwrap(sidelineImage.pngData())
+            // Only add a sideline for line 1.
+            try data.write(to: sidelineDir.appendingPathComponent("1.png"))
+        }
+
+        return (tempDir, tempDir)
+    }
+
+    private func makeSolidColorImage(size: CGSize, color: UIColor) -> UIImage {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        return UIGraphicsImageRenderer(size: size, format: format).image { ctx in
+            color.setFill()
+            ctx.fill(CGRect(origin: .zero, size: size))
+        }
     }
 }
