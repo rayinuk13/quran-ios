@@ -137,8 +137,40 @@ class ImageDataServiceTests: XCTestCase {
             return XCTFail("Expected lineBased content, got \(imagePage.content)")
         }
         XCTAssertEqual(lines.count, 2)
-        XCTAssertNotNil(lines[0].sidelineImage, "Line 1 should have a sideline image")
+
+        let sidelineImage = try XCTUnwrap(lines[0].sidelineImage, "Line 1 should have a sideline image")
+        // The test sideline image is created as 20×10 (width × height).
+        XCTAssertEqual(sidelineImage.size, CGSize(width: 20, height: 10))
         XCTAssertNil(lines[1].sidelineImage, "Line 2 should not have a sideline image")
+    }
+
+    func testNonSequentialLineNumbers() async throws {
+        // Write line files with gaps: 1.png, 3.png, 5.png — order must still be ascending.
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let pageNumber = 2
+        let pageDir = tempDir.appendingPathComponent("\(pageNumber)", isDirectory: true)
+        try FileManager.default.createDirectory(at: pageDir, withIntermediateDirectories: true)
+
+        for lineNumber in [3, 1, 5] { // write in reverse/random order on purpose
+            let img = makeSolidColorImage(size: CGSize(width: 100, height: 20), color: .gray)
+            let data = try XCTUnwrap(img.pngData())
+            try data.write(to: pageDir.appendingPathComponent("\(lineNumber).png"))
+        }
+
+        let lineService = ImageDataService(
+            ayahInfoDatabase: TestResources.resourceURL("hafs_1405_ayahinfo.db"),
+            imagesURL: tempDir
+        )
+        let page = quran.pages[1]
+        let imagePage = try await lineService.imageForPage(page)
+
+        guard case .lineBased(let lines) = imagePage.content else {
+            return XCTFail("Expected lineBased content, got \(imagePage.content)")
+        }
+        XCTAssertEqual(lines.map(\.number), [1, 3, 5], "Lines must be sorted in ascending order regardless of filesystem order")
     }
 
     func testLineBasedPageSizeComputedFromLines() async throws {
