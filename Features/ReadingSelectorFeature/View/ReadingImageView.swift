@@ -18,7 +18,7 @@ struct ReadingImageView: View {
 
     var body: some View {
         AdaptiveImageScrollView(decorations: decorations, renderingMode: renderingMode) {
-            image
+            .fullPage(image)
         } onScaleChange: { _ in
         } onGlobalFrameChange: { _ in
         } header: {

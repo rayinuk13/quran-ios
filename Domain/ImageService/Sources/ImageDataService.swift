@@ -31,15 +31,6 @@ public struct ImageDataService {
     }
 
     public func imageForPage(_ page: Page) async throws -> ImagePage {
-        let imageURL = try imageURLForPage(page)
-        guard let image = UIImage(contentsOfFile: imageURL.path) else {
-            throw ImageDataServiceError.missingImage(page: page, path: imageURL.path)
-        }
-
-        // preload the image
-        let unloadedImage: UIImage = image
-        let preloadedImage = preloadImage(unloadedImage)
-
         let frames: WordFrameCollection
         do {
             frames = try await wordFrames(page)
@@ -48,7 +39,29 @@ public struct ImageDataService {
             frames = WordFrameCollection(lines: [])
         }
 
-        return ImagePage(image: preloadedImage, wordFrames: frames, startAyah: page.firstVerse)
+        // Prefer a single pre-rendered page image when available.
+        let pageImageURL = imagesURL.appendingPathComponent("page\(page.pageNumber.as3DigitString()).png")
+        if FileManager.default.fileExists(atPath: pageImageURL.path) {
+            guard let image = UIImage(contentsOfFile: pageImageURL.path) else {
+                throw ImageDataServiceError.missingImage(page: page, path: pageImageURL.path)
+            }
+            let preloadedImage = preloadImage(image)
+            return ImagePage(image: preloadedImage, wordFrames: frames, startAyah: page.firstVerse)
+        }
+
+        // Fall back to a line-based page directory.
+        let pageDirectory = imagesURL.appendingPathComponent("\(page.pageNumber)", isDirectory: true)
+        if FileManager.default.fileExists(atPath: pageDirectory.path) {
+            let lines = try loadLineImages(from: pageDirectory)
+            if !lines.isEmpty {
+                return ImagePage(lines: lines, wordFrames: frames, startAyah: page.firstVerse)
+            }
+        }
+
+        logFiles(directory: imagesURL) // <reading>/images/width/
+        logFiles(directory: imagesURL.deletingLastPathComponent()) // <reading>/images/
+        logFiles(directory: imagesURL.deletingLastPathComponent().deletingLastPathComponent()) // <reading>/
+        throw ImageDataServiceError.missingImage(page: page, path: pageImageURL.path)
     }
 
     // MARK: Internal
@@ -72,88 +85,7 @@ public struct ImageDataService {
         logger.error("Images: Directory \(directory) contains files \(fileNames)")
     }
 
-    private func imageURLForPage(_ page: Page) throws -> URL {
-        let pageImageURL = imagesURL.appendingPathComponent("page\(page.pageNumber.as3DigitString()).png")
-        if FileManager.default.fileExists(atPath: pageImageURL.path) {
-            return pageImageURL
-        }
-
-        if let stitchedPageURL = try stitchedImageURLForLineBasedPageIfNeeded(page) {
-            return stitchedPageURL
-        }
-
-        logFiles(directory: imagesURL) // <reading>/images/width/
-        logFiles(directory: imagesURL.deletingLastPathComponent()) // <reading>/images/
-        logFiles(directory: imagesURL.deletingLastPathComponent().deletingLastPathComponent()) // <reading>/
-        throw ImageDataServiceError.missingImage(page: page, path: pageImageURL.path)
-    }
-
-    private func stitchedImageURLForLineBasedPageIfNeeded(_ page: Page) throws -> URL? {
-        let fileManager = FileManager.default
-        let pageDirectory = imagesURL.appendingPathComponent("\(page.pageNumber)", isDirectory: true)
-        guard fileManager.fileExists(atPath: pageDirectory.path) else {
-            return nil
-        }
-
-        let generatedDirectory = imagesURL.appendingPathComponent("generated", isDirectory: true)
-        let generatedPageURL = generatedDirectory.appendingPathComponent("page\(page.pageNumber.as3DigitString()).png")
-        if fileManager.fileExists(atPath: generatedPageURL.path) {
-            return generatedPageURL
-        }
-
-        let lineImages = try loadLineImages(from: pageDirectory)
-        guard !lineImages.isEmpty else {
-            return nil
-        }
-
-        let width = lineImages.map { $0.image.size.width }.max() ?? 0
-        let height = lineImages.reduce(CGFloat(0)) { $0 + $1.image.size.height }
-
-        var rendererFormat = UIGraphicsImageRendererFormat.default()
-        rendererFormat.scale = 1
-        rendererFormat.opaque = true
-        let renderer = UIGraphicsImageRenderer(
-            size: CGSize(width: width, height: height),
-            format: rendererFormat
-        )
-        let stitchedImage = renderer.image { _ in
-            UIColor.white.setFill()
-            UIRectFill(CGRect(x: 0, y: 0, width: width, height: height))
-
-            var y: CGFloat = 0
-            for line in lineImages {
-                let lineFrame = CGRect(x: 0, y: y, width: line.image.size.width, height: line.image.size.height)
-                line.image.draw(in: lineFrame)
-
-                let sideLinePath = pageDirectory
-                    .appendingPathComponent("sidelines", isDirectory: true)
-                    .appendingPathComponent("\(line.number).png")
-                if let sideLineImage = UIImage(contentsOfFile: sideLinePath.path) {
-                    let sideLineY = y + (line.image.size.height - sideLineImage.size.height) / 2
-                    let sideLineFrame = CGRect(
-                        x: 0,
-                        y: sideLineY,
-                        width: sideLineImage.size.width,
-                        height: sideLineImage.size.height
-                    )
-                    sideLineImage.draw(in: sideLineFrame)
-                }
-
-                y += line.image.size.height
-            }
-        }
-
-        try fileManager.createDirectory(at: generatedDirectory, withIntermediateDirectories: true)
-        if let data = stitchedImage.pngData() {
-            try data.write(to: generatedPageURL, options: Data.WritingOptions.atomic)
-            logger.info("Images: Generated stitched page image for page \(page.pageNumber) at \(generatedPageURL.path)")
-            return generatedPageURL
-        }
-
-        return nil
-    }
-
-    private func loadLineImages(from pageDirectory: URL) throws -> [(number: Int, image: UIImage)] {
+    private func loadLineImages(from pageDirectory: URL) throws -> [LineImage] {
         let fileManager = FileManager.default
         let files = try fileManager.contentsOfDirectory(at: pageDirectory, includingPropertiesForKeys: nil)
         let lineFiles = files
@@ -170,7 +102,11 @@ public struct ImageDataService {
             guard let image = UIImage(contentsOfFile: line.url.path) else {
                 return nil
             }
-            return (line.number, image)
+            let sidelinePath = pageDirectory
+                .appendingPathComponent("sidelines", isDirectory: true)
+                .appendingPathComponent("\(line.number).png")
+            let sidelineImage = UIImage(contentsOfFile: sidelinePath.path)
+            return LineImage(number: line.number, image: image, sidelineImage: sidelineImage)
         }
     }
 
